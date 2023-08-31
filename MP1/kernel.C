@@ -39,7 +39,7 @@ int main()
   Console::puts("WELCOME TO MY KERNEL!\n");
   Console::puts("      ");
   Console::set_TextColor(GREEN, RED);
-  Console::puts("<Enter your name>\n");
+  Console::puts("Sridatta Raghavendra Chintapalli\n");
 
   /* -- LOOP FOREVER! */
   for(;;);
