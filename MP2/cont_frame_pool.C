@@ -1,8 +1,8 @@
 /*
  File: ContFramePool.C
 
- Author:
- Date  :
+ Author: Sridatta Raghavendra Chintapalli
+ Date  : 09/14/2023
 
  */
 
@@ -253,6 +253,9 @@ unsigned long ContFramePool::get_frames(unsigned int _n_frames)
     for(int fno=first_available_free_frame + 1; fno <= last_frame; fno++){
         set_state(fno, FrameState::Used);
     }
+
+    /*Decrement the available free frames*/
+    nFreeFrames = nFreeFrames - ((last_frame - first_available_free_frame) + 1);
 
     return base_frame_no + first_available_free_frame;
 }
