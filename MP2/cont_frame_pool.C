@@ -215,24 +215,60 @@ ContFramePool::ContFramePool(unsigned long _base_frame_no,
 
 unsigned long ContFramePool::get_frames(unsigned int _n_frames)
 {
-    // TODO: IMPLEMENTATION NEEEDED!
-    Console::puts("ContframePool::get_frames not implemented!\n");
-    assert(false);
+    assert(_n_frames <= nFreeFrames);
+    
+    unsigned int available_continuos_free_frames = 0;
+    int first_available_free_frame = -1;
+
+    /*Loop around the frames and get the current frame state*/
+    for(int fno=0; fno < nframes; fno++){
+        ContFramePool::FrameState currentFrameState = get_state(fno);
+        if(currentFrameState == FrameState::Free){
+            available_continuos_free_frames++;
+            if(available_continuos_free_frames == 1){
+                first_available_free_frame = fno;
+            }
+        }else{
+            available_continuos_free_frames = 0;
+            first_available_free_frame = -1;
+        }
+
+        if(available_continuos_free_frames == _n_frames){
+            break;
+        }
+    }
+
+    /*We did not find any available free frames, hence return 0*/
+    if(first_available_free_frame == -1){
+        return 0;
+    }
+
+    /*Determine the last frame*/
+    unsigned int last_frame = (first_available_free_frame + _n_frames) - 1;
+
+    /*Set the first frame as head frame*/
+    set_state(first_available_free_frame,FrameState::HoS);
+
+    /*Mark all the other continuos frames as used*/
+    for(int fno=first_available_free_frame + 1; fno <= last_frame; fno++){
+        set_state(fno, FrameState::Used);
+    }
+
+    return base_frame_no + first_available_free_frame;
 }
 
 void ContFramePool::mark_inaccessible(unsigned long _base_frame_no,
                                       unsigned long _n_frames)
 {
-    // TODO: IMPLEMENTATION NEEEDED!
-    Console::puts("ContframePool::mark_inaccessible not implemented!\n");
-    assert(false);
+    /*Loop around the frames and mark them as inaccessible in the bitmap*/
+    for(int fno=0; fno<_n_frames; fno++){
+        set_state(_base_frame_no+fno,FrameState::InA);
+    }
 }
 
 void ContFramePool::release_frames(unsigned long _first_frame_no)
 {
-    // TODO: IMPLEMENTATION NEEEDED!
-    Console::puts("ContframePool::release_frames not implemented!\n");
-    assert(false);
+    
 }
 
 unsigned long ContFramePool::needed_info_frames(unsigned long _n_frames)
