@@ -119,6 +119,7 @@
 /*--------------------------------------------------------------------------*/
 /* FORWARDS */
 /*--------------------------------------------------------------------------*/
+ContFramePool *ContFramePool::frame_pools;
 
 /* -- (none) -- */
 
@@ -128,7 +129,7 @@
 ContFramePool::FrameState ContFramePool::get_state(unsigned long _frame_no)
 {
     unsigned int bitmap_index = _frame_no / 4;
-    unsigned char mask = 0x3 << ((_frame_no % 4) * 2);
+    unsigned char mask = 0xC0 >> ((_frame_no % 4) * 2);
 
     switch ((bitmap[bitmap_index] & mask))
     {
@@ -150,9 +151,9 @@ ContFramePool::FrameState ContFramePool::get_state(unsigned long _frame_no)
 void ContFramePool::set_state(unsigned long _frame_no, ContFramePool::FrameState _state)
 {
     unsigned int bitmap_index = _frame_no / 4;
-    unsigned char free_mask = 0x3 << ((_frame_no % 4) * 2);
-    unsigned char hos_mask = 0x1 << ((_frame_no % 4) * 2);
-    unsigned char ina_mask = 0x2 << ((_frame_no % 4) * 2);
+    unsigned char free_mask = 0xC0 >> ((_frame_no % 4) * 2);
+    unsigned char hos_mask = 0x80 >> ((_frame_no % 4) * 2);
+    unsigned char ina_mask = 0x40 >> ((_frame_no % 4) * 2);
 
 
     switch (_state)
@@ -210,6 +211,13 @@ ContFramePool::ContFramePool(unsigned long _base_frame_no,
     }
 
     /*TODO : Maintain a list of frames*/
+    /*The first frame pool that is created will be the first one in the list,
+        others will be added next in the list*/
+    if(ContFramePool::frame_pools == NULL){
+        ContFramePool::frame_pools = this;
+    }else{
+        frame_pools->next = this;
+    }
     Console::puts("Frame pool initialized.\n");
 }
 
@@ -264,14 +272,60 @@ void ContFramePool::mark_inaccessible(unsigned long _base_frame_no,
                                       unsigned long _n_frames)
 {
     /*Loop around the frames and mark them as inaccessible in the bitmap*/
-    for(int fno=0; fno<_n_frames; fno++){
+    for(int fno=0; fno < _n_frames; fno++){
         set_state(_base_frame_no+fno,FrameState::InA);
     }
+    nFreeFrames -= _n_frames;
 }
 
 void ContFramePool::release_frames(unsigned long _first_frame_no)
 {
-    
+    ContFramePool *current_pool = ContFramePool::frame_pools;
+
+    while(current_pool->base_frame_no > _first_frame_no || current_pool->base_frame_no+current_pool->nframes <= _first_frame_no){
+        if(current_pool->next == NULL){
+            Console::puts("Cannot find first frame to release.\n");
+            return;
+        }else{
+            current_pool = current_pool->next;
+        }
+    }
+
+    unsigned char *current_pool_bitmap = current_pool->bitmap;
+    bool frames_to_be_freed = true;
+    const unsigned long first_frame_to_be_freed = current_pool->base_frame_no - _first_frame_no;
+    unsigned long frame_to_be_freed = first_frame_to_be_freed;
+
+    while (frames_to_be_freed)
+    {
+        unsigned int bitmap_index = frame_to_be_freed / 4;
+        unsigned char mask = 0xC0 >> ((frame_to_be_freed % 4) * 2);
+        unsigned int frame_status = (current_pool_bitmap[bitmap_index] & mask);
+
+        if(frame_status == 3){
+             Console::puts("This is an in accessible frame.\n");
+             frames_to_be_freed = false;
+             return;
+        }
+
+        if(frame_to_be_freed == first_frame_to_be_freed && (frame_status == 1 || frame_status != 2)){
+            Console::puts("This is not a start of sequence or the frame is already free.\n");
+            frames_to_be_freed = false;
+            return;
+        }else{
+            if(frame_status == 1 || frame_status == 2){
+                Console::puts("Released all frames in the sequence.\n");
+                frames_to_be_freed = false;
+                return;
+            }
+        }
+
+        unsigned char free_mask = 0xC0 >> ((frame_to_be_freed % 4) * 2);
+        current_pool_bitmap[bitmap_index] |= free_mask;
+
+        current_pool->nFreeFrames += 1;
+        frame_to_be_freed++;
+    }
 }
 
 unsigned long ContFramePool::needed_info_frames(unsigned long _n_frames)

@@ -54,7 +54,10 @@ private:
 
     FrameState get_state(unsigned long _frame_no);
     void set_state(unsigned long _frame_no, FrameState _state);
-    
+
+    /* ---- Frame pool list */
+    static ContFramePool *frame_pools;
+    ContFramePool *next;
     
 public:
 
