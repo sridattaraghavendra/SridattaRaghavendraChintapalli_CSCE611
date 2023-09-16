@@ -83,7 +83,6 @@ int main() {
                                    process_mem_pool_info_frame);
     
     process_mem_pool.mark_inaccessible(MEM_HOLE_START_FRAME, MEM_HOLE_SIZE);
-
     /* -- MOST OF WHAT WE NEED IS SETUP. THE KERNEL CAN START. */
 
     Console::puts("Hello World!\n");

@@ -218,8 +218,17 @@ ContFramePool::ContFramePool(unsigned long _base_frame_no,
         ContFramePool::frame_pools = this;
     }
     else
-    {
-        frame_pools->next = this;
+    {   
+        ContFramePool *next_pool = frame_pools->next;
+        if(next_pool == NULL){
+            frame_pools->next = this;
+        }else{
+            while(next_pool->next){
+                next_pool = next_pool->next;
+            }
+            next_pool->next = this;
+        }
+       
     }
 
     Console::puts("Frame pool initialized.\n");
@@ -252,7 +261,6 @@ unsigned long ContFramePool::get_frames(unsigned int _n_frames)
 
         if (available_continuos_free_frames == _n_frames)
         {
-            Console::puts("Get frames : Found enough continuos frames for allocation.\n");
             break;
         }
     }
@@ -286,6 +294,7 @@ void ContFramePool::mark_inaccessible(unsigned long _base_frame_no,
 {
     /*Loop around the frames and mark them as inaccessible in the bitmap*/
     unsigned long start_frame_number = _base_frame_no - base_frame_no;
+
     if (start_frame_number < base_frame_no || start_frame_number > base_frame_no + nframes)
     {
         Console::puts("Mark Inaccessible : Frame unreachable, cannot mark frame as inaccessible.\n");
@@ -304,7 +313,7 @@ void ContFramePool::release_frames(unsigned long _first_frame_no)
 {
     ContFramePool *current_pool = ContFramePool::frame_pools;
 
-    while (current_pool->base_frame_no > _first_frame_no || current_pool->base_frame_no + current_pool->nframes <= _first_frame_no)
+    while (!(_first_frame_no >= current_pool->base_frame_no && _first_frame_no < current_pool->base_frame_no + current_pool->nframes))
     {
         if (current_pool->next == NULL)
         {
