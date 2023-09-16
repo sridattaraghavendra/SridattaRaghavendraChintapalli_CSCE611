@@ -210,7 +210,6 @@ ContFramePool::ContFramePool(unsigned long _base_frame_no,
         nFreeFrames--;
     }
 
-    /*TODO : Maintain a list of frames*/
     /*The first frame pool that is created will be the first one in the list,
         others will be added next in the list*/
     if (ContFramePool::frame_pools == NULL)
