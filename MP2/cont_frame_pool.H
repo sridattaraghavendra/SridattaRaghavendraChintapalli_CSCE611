@@ -58,6 +58,9 @@ private:
     /* ---- Frame pool list */
     static ContFramePool *frame_pools;
     ContFramePool *next;
+
+    /*Frame pools release frames in a pool method*/
+    void release_frames_in_pool(unsigned long _first_frame_no);
     
 public:
 

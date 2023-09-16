@@ -326,16 +326,19 @@ void ContFramePool::release_frames(unsigned long _first_frame_no)
         }
     }
 
-    unsigned char *current_pool_bitmap = current_pool->bitmap;
+    current_pool->release_frames_in_pool(_first_frame_no);
+}
+
+void ContFramePool::release_frames_in_pool(unsigned long _first_frame_no){
     bool frames_to_be_freed = true;
-    const unsigned long first_frame_to_be_freed = _first_frame_no - current_pool->base_frame_no;
+    const unsigned long first_frame_to_be_freed = _first_frame_no - base_frame_no;
     unsigned long frame_to_be_freed = first_frame_to_be_freed;
 
     while (frames_to_be_freed)
     {
         unsigned int bitmap_index = frame_to_be_freed / 4;
         unsigned char mask = 0xC0 >> ((frame_to_be_freed % 4) * 2);
-        unsigned int frame_status = (current_pool_bitmap[bitmap_index] & mask) >> ((3 - (frame_to_be_freed % 4)) * 2);
+        unsigned int frame_status = (bitmap[bitmap_index] & mask) >> ((3 - (frame_to_be_freed % 4)) * 2);
 
         if (frame_status == 1)
         {
@@ -360,9 +363,9 @@ void ContFramePool::release_frames(unsigned long _first_frame_no)
             return;
         }
 
-        current_pool_bitmap[bitmap_index] |= mask;
+        bitmap[bitmap_index] |= mask;
 
-        current_pool->nFreeFrames += 1;
+        nFreeFrames += 1;
         frame_to_be_freed++;
     }
 }
