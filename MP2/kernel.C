@@ -70,7 +70,6 @@ int main() {
     ContFramePool kernel_mem_pool(KERNEL_POOL_START_FRAME,
                                   KERNEL_POOL_SIZE,
                                   0);
-    
     /* ---- PROCESS POOL -- */
 
 

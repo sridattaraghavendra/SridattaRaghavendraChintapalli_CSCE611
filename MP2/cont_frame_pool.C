@@ -335,11 +335,9 @@ void ContFramePool::release_frames_in_pool(unsigned long _first_frame_no){
 
     while (frames_to_be_freed)
     {
-        unsigned int bitmap_index = frame_to_be_freed / 4;
-        unsigned char mask = 0xC0 >> ((frame_to_be_freed % 4) * 2);
-        unsigned int frame_status = (bitmap[bitmap_index] & mask) >> ((3 - (frame_to_be_freed % 4)) * 2);
+        FrameState frame_status = get_state(frame_to_be_freed);
 
-        if (frame_status == 1)
+        if (frame_status == FrameState::InA)
         {
             Console::puts("Cannot release an in-accessible frame.\n");
             frames_to_be_freed = false;
@@ -347,14 +345,14 @@ void ContFramePool::release_frames_in_pool(unsigned long _first_frame_no){
         }
 
         /*If the frame to be freed is a first frame, then we expect the status to be HoS, if the status is
-         free or Used we abort the free operation*/
-        if (frame_to_be_freed == first_frame_to_be_freed && (frame_status == 3 || frame_status != 2))
+         free we abort the free operation*/
+        if (frame_to_be_freed == first_frame_to_be_freed && (frame_status == FrameState::Free || frame_status != FrameState::HoS))
         {
             Console::puts("This is not a start of sequence or the frame is already free.\n");
             frames_to_be_freed = false;
             return;
         }
-        else if (frame_to_be_freed != first_frame_to_be_freed && (frame_status == 3 || frame_status == 2))
+        else if (frame_to_be_freed != first_frame_to_be_freed && (frame_status == FrameState::HoS || frame_status == FrameState::Free))
         {
             /*If the frame to be freed is not a first frame, and we see that it's status is free or HoS then
                 we have encountered the start of the next frame or free space hence we abort freeing*/
@@ -362,7 +360,7 @@ void ContFramePool::release_frames_in_pool(unsigned long _first_frame_no){
             return;
         }
 
-        bitmap[bitmap_index] |= mask;
+        set_state(frame_to_be_freed,FrameState::Free);
 
         nFreeFrames += 1;
         frame_to_be_freed++;
