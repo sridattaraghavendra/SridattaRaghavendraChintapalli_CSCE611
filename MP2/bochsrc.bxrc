@@ -11,7 +11,7 @@ vgaromimage: file=VGABIOS-lgpl-latest
 gdbstub: enabled=1, port=1234, text_base=0, data_base=0, bss_base=0
 
 # what disk images will be used 
-floppya: 1_44=dev_kernel_grub.img, status=inserted
+floppya: 1_44=mp2.img, status=inserted
 #floppyb: 1_44=floppyb.img, status=inserted
 
 # hard disk
