@@ -33,10 +33,10 @@ PageTable::PageTable()
           Direct memory till 4MB*/
    /*To map the first 4MB we just need to have 1024 entries since there are 1024 pages till 4MB*/
    unsigned long page_table_number = kernel_mem_pool->get_frames(1);
-   unsigned long *page_table = (unsigned long *)(page_table_number * PAGE_SIZE);
+   unsigned long *page_table_page = (unsigned long *)(page_table_number * PAGE_SIZE);
 
    /*Assign the address of the page table page to the first page directory entry*/
-   page_directory[0] = ((unsigned long)page_table) | page_entry_valid_status;
+   page_directory[0] = ((unsigned long)page_table_page) | page_entry_valid_status;
 
    /*Mark rest of the page directory entries as invalid*/
    for(int page_directory_index = 1; page_directory_index < 1024;page_directory_index++){
@@ -48,7 +48,7 @@ PageTable::PageTable()
 
    /*Initialize the 1024 frame addresses in the page table page*/
    for(int page_table_index = 0; page_table_index < shared_size / PAGE_SIZE; page_table_index++){
-     page_table[page_table_index] = page_address | page_entry_valid_status;
+     page_table_page[page_table_index] = page_address | page_entry_valid_status;
      page_address = page_address + PAGE_SIZE;
    }
 
@@ -87,7 +87,6 @@ void PageTable::handle_fault(REGS * _r)
    filled with the page table address from the page directory index*/
   unsigned long *page_table;
 
-  Console::putui(_r->err_code);
 
   if(_r->err_code ^ 0x1){ //Extract the last bit value bit 0 which represents the page not found if bit 0 is 0 then we handle the exception if present bit is 1 then we don't handle the exception.
         /*First we will check if the page directory index is invalid if so we have
