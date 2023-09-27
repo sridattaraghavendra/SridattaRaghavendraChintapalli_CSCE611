@@ -87,8 +87,9 @@ void PageTable::handle_fault(REGS * _r)
    filled with the page table address from the page directory index*/
   unsigned long *page_table;
 
+  Console::putui(_r->err_code);
 
-  if(_r->err_code & 0xFFFFFFFE){ //Extract the last bit of the error code to check for page fault error
+  if(_r->err_code ^ 0x1){ //Extract the last bit value bit 0 which represents the page not found if bit 0 is 0 then we handle the exception if present bit is 1 then we don't handle the exception.
         /*First we will check if the page directory index is invalid if so we have
           to create a new page table page and store the page table page reference in this index*/
         if((page_directory_address[page_directory_index] & 0x1) == 0){
