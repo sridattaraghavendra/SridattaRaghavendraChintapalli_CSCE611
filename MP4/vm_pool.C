@@ -67,6 +67,9 @@ VMPool::VMPool(unsigned long  _base_address,
 }
 
 unsigned long VMPool::allocate(unsigned long _size) {
+   /*If the required size is less than 4k, then allocate a page*/
+   /*If the required size is a multiple of 4k then simply divide the size/4k and multiply with the page size*/
+   /*If the required size is between 4k - 5k or 6k, and if the remainder is not 0 then assign a full page + quotiet * Page_size*/
    unsigned long size_to_be_allocated = _size <= Machine::PAGE_SIZE ? Machine::PAGE_SIZE : (_size/Machine::PAGE_SIZE) * Machine::PAGE_SIZE + (_size%Machine::PAGE_SIZE == 0 ? 0 : Machine::PAGE_SIZE);
 
    Console::puts("Determined size to be allocated as : ");
@@ -75,8 +78,8 @@ unsigned long VMPool::allocate(unsigned long _size) {
 
    pool_info * pool_locations = (pool_info *)base_address;
 
-   int index = 0;
-   for(int index = 0; index < 512; index++){
+   int index;
+   for(index = 1; index < 512; index++){
       if(pool_locations[index].start_address == 0 && pool_locations[index].size == 0){
          pool_locations[index].start_address = pool_locations[index - 1].start_address + pool_locations[index - 1].size;
          pool_locations[index].size = size_to_be_allocated;
@@ -84,19 +87,26 @@ unsigned long VMPool::allocate(unsigned long _size) {
       }
    }
 
+   Console::puts("Start address : ");
+   Console::puti(pool_locations[index].start_address);
+   Console::puts("\n");
+
    return pool_locations[index].start_address;
 }
 
 void VMPool::release(unsigned long _start_address) {
-    Console::puts("Received request to release : \n");
+    Console::puts("Received request to release : ");
     Console::puti(_start_address);
     Console::puts("\n");
 
     /*Find out the start address of the region in the pool_locations*/
-    int index = 0;
+    int index;
     bool location_found;
     pool_info * pool_locations = (pool_info *)base_address;
-    for(index = 0; index < 512; index++){
+    for(index = 1; index < 512; index++){
+        Console::puts("Address for pool : ");
+        Console::puti(pool_locations[index].start_address);
+        Console::puts("\n");
         if(pool_locations[index].start_address == _start_address){
             location_found = true;
             break;
@@ -128,6 +138,8 @@ void VMPool::release(unsigned long _start_address) {
 }
 
 bool VMPool::is_legitimate(unsigned long _address) {
+    /*The first frame will be used for storing the vm_pool's startaddress and size, 
+        if we remove this line, the system will forever be page faulting*/
     if(_address == base_address){
         return true;
     }

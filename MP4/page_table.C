@@ -117,7 +117,7 @@ void PageTable::handle_fault(REGS * _r)
     }
   }
 
-  Console::puts("VM Pool entry count.\n");
+  Console::puts("VM Pool entry count : ");
   Console::puti(vm_pool_entry_count);
   Console::puts("\n");
 
@@ -172,7 +172,7 @@ void PageTable::free_page(unsigned long _page_no) {
    unsigned long frame_number = *page_table_entry >> 12;
    if((*page_table_entry & 0x1)){
       process_mem_pool->release_frames(frame_number);
-      *page_table_entry |= page_entry_not_valid_status; 
+      *page_table_entry = 0 | page_entry_not_valid_status; 
    }
    write_cr3((unsigned long)page_directory);
    Console::puts("Free page.\n");
