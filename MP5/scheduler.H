@@ -12,7 +12,7 @@
 /*--------------------------------------------------------------------------*/
 /* DEFINES */
 /*--------------------------------------------------------------------------*/
-
+#define MAX_QUEUE_SIZE 64
 /* -- (none) -- */
 
 /*--------------------------------------------------------------------------*/
@@ -57,6 +57,15 @@
 class Scheduler {
 
   /* The scheduler may need private members... */
+private:
+   Thread ** queue;
+   unsigned int head;
+   unsigned int tail;
+
+   virtual void enqueue(Thread * thread_address);
+   virtual Thread * dequeue();
+   virtual bool isQueueFull();
+   virtual bool isQueueEmpty();
   
 public:
 
