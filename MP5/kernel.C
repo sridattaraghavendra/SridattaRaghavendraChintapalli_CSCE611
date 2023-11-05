@@ -58,6 +58,9 @@
 
 #include "thread.H"          /* THREAD MANAGEMENT */
 
+#define _USES_SCHEDULER_
+#define _TERMINATING_FUNCTIONS_
+
 #ifdef _USES_SCHEDULER_
 #include "scheduler.H"
 #endif
@@ -135,8 +138,15 @@ Thread * thread1;
 Thread * thread2;
 Thread * thread3;
 Thread * thread4;
+Thread * idlethread;
 
 /* -- THE 4 FUNCTIONS fun1 - fun4 ARE LARGELY IDENTICAL. */
+
+void idle_func(){
+    Console::puts("IDLE Thread: "); Console::puti(Thread::CurrentThread()->ThreadId()); Console::puts("\n");
+    Console::puts("IDLE Thread INVOKED!\n");
+    SYSTEM_SCHEDULER->yield();
+}
 
 void fun1() {
     Console::puts("Thread: "); Console::puti(Thread::CurrentThread()->ThreadId()); Console::puts("\n");
@@ -277,6 +287,10 @@ int main() {
     Console::puts("Hello World!\n");
 
     /* -- LET'S CREATE SOME THREADS... */
+    Console::puts("Creating IDLE Thread\n");
+    char * stack0 = new char[100];
+    idlethread = new Thread(idle_func,stack0,100);
+
 
     Console::puts("CREATING THREAD 1...\n");
     char * stack1 = new char[1024];
@@ -302,6 +316,7 @@ int main() {
 
     /* WE ADD thread2 - thread4 TO THE READY QUEUE OF THE SCHEDULER. */
 
+    SYSTEM_SCHEDULER->add(thread1);
     SYSTEM_SCHEDULER->add(thread2);
     SYSTEM_SCHEDULER->add(thread3);
     SYSTEM_SCHEDULER->add(thread4);
@@ -310,8 +325,8 @@ int main() {
 
     /* -- KICK-OFF THREAD1 ... */
 
-    Console::puts("STARTING THREAD 1 ...\n");
-    Thread::dispatch_to(thread1);
+    Console::puts("STARTING IDLE Thread ...\n");
+    Thread::dispatch_to(idlethread);
 
     /* -- AND ALL THE REST SHOULD FOLLOW ... */
 

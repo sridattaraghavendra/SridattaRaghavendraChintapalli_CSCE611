@@ -55,11 +55,39 @@ Scheduler::Scheduler() {
 }
 
 void Scheduler::yield() {
-  assert(false);
+  Console::puts("Yield called.\n");
+  if(Machine::interrupts_enabled()){
+    Machine::disable_interrupts();
+  }
+
+  /*The next thread that will be executing will be the first one in the queue*/
+  Thread * next_thread = dequeue();
+
+  Console::puts("Dispatching control to thread : ");
+  Console::puti(next_thread->ThreadId());
+  Console::puts("\n");
+  /*Get the latest head and then dispatch the control to that thread*/
+  Thread::dispatch_to(next_thread);
+
+  if(!Machine::interrupts_enabled()){
+    Machine::enable_interrupts();
+  }
 }
 
 void Scheduler::resume(Thread * _thread) {
-  assert(false);
+  if(Machine::interrupts_enabled()){
+    Machine::disable_interrupts();
+  }
+  /*Get a thread and put it to the end of the ready queue*/
+  enqueue(_thread);
+
+  Console::puts("Resuming thread : ");
+  Console::puti(_thread->ThreadId());
+  Console::puts("\n");
+
+  if(!Machine::interrupts_enabled()){
+    Machine::enable_interrupts();
+  }
 }
 
 void Scheduler::add(Thread * _thread) {
@@ -67,7 +95,10 @@ void Scheduler::add(Thread * _thread) {
 }
 
 void Scheduler::terminate(Thread * _thread) {
-  assert(false);
+  Console::puts("Thread terminate called.\n");
+  /*Delete the thread and dispath the control to the next one in the queue*/
+  delete _thread;
+  yield();
 }
 
 /*Scheduler queue functions*/
@@ -75,14 +106,17 @@ void Scheduler::enqueue(Thread * _thread){
   if(isQueueFull()){
     Console::puts("Queue is full, cannot accept any more threads.\n");
     assert(false);
-  }
-
-  if(isQueueEmpty()){
+  } else if(isQueueEmpty()){
     head = 0;
+    tail = 0;
+    queue[tail] = _thread;
+  }else if(tail == MAX_QUEUE_SIZE - 1 && head != 0){
+    tail = 0;
+    queue[tail] = _thread;
+  }else{
+    tail++;
+    queue[tail] = _thread;
   }
-
-  tail++;
-  queue[tail] = _thread;
 }
 
 Thread * Scheduler::dequeue(){
@@ -92,10 +126,12 @@ Thread * Scheduler::dequeue(){
   }
 
   Thread * thread = queue[head];
-
+  queue[head] = NULL;
   if(head == tail){
     head = -1;
     tail = -1;
+  }else if(head == MAX_QUEUE_SIZE - 1){
+    head = 0;
   }else{
     head++;
   }
@@ -108,5 +144,5 @@ bool Scheduler::isQueueEmpty(){
 }
 
 bool Scheduler::isQueueFull(){
-  return tail == MAX_QUEUE_SIZE - 1;
+  return ((head == 0 && tail == MAX_QUEUE_SIZE - 1) || ((tail + 1)%MAX_QUEUE_SIZE == head));
 }

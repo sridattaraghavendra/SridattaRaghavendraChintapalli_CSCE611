@@ -44,6 +44,7 @@ class MemPool { /* Contiguous-Memory Pool */
 
 private:
    unsigned long start_address;
+   FramePool * frame_pool;
 
 public:
    MemPool(FramePool * _frame_pool, int _n_frames);

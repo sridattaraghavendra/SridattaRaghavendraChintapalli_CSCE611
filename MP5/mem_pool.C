@@ -28,6 +28,7 @@
 /*--------------------------------------------------------------------------*/
 
 MemPool::MemPool(FramePool * _frame_pool, int _n_frames) {
+  this->frame_pool = _frame_pool;
   Console::puts("Allocating Memory Pool... ");
   start_address = _frame_pool->get_frame();
   for (int i = 1; i < _n_frames; i++) {
