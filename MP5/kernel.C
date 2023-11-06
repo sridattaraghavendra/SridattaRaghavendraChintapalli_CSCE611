@@ -138,15 +138,9 @@ Thread * thread1;
 Thread * thread2;
 Thread * thread3;
 Thread * thread4;
-Thread * idlethread;
+Thread * thread5;
 
 /* -- THE 4 FUNCTIONS fun1 - fun4 ARE LARGELY IDENTICAL. */
-
-void idle_func(){
-    Console::puts("IDLE Thread: "); Console::puti(Thread::CurrentThread()->ThreadId()); Console::puts("\n");
-    Console::puts("IDLE Thread INVOKED!\n");
-    SYSTEM_SCHEDULER->yield();
-}
 
 void fun1() {
     Console::puts("Thread: "); Console::puti(Thread::CurrentThread()->ThreadId()); Console::puts("\n");
@@ -211,6 +205,19 @@ void fun4() {
     }
 }
 
+void fun5() {
+    Console::puts("Thread: "); Console::puti(Thread::CurrentThread()->ThreadId()); Console::puts("\n");
+    Console::puts("FUN 5 INVOKED!\n");
+
+    for(int j = 0;; j++) {
+        Console::puts("FUN 5 IN BURST["); Console::puti(j); Console::puts("]\n");
+        for (int i = 0; i < 10; i++) {
+	    Console::puts("FUN 5: TICK ["); Console::puti(i); Console::puts("]\n");
+        }
+        pass_on_CPU(thread1);
+    }
+}
+
 /*--------------------------------------------------------------------------*/
 /* MAIN ENTRY INTO THE OS */
 /*--------------------------------------------------------------------------*/
@@ -269,7 +276,7 @@ int main() {
 
     /* -- SCHEDULER -- IF YOU HAVE ONE -- */
  
-    SYSTEM_SCHEDULER = new Scheduler();
+    SYSTEM_SCHEDULER = new RRScheduler(50);
 
 #endif
 
@@ -287,10 +294,6 @@ int main() {
     Console::puts("Hello World!\n");
 
     /* -- LET'S CREATE SOME THREADS... */
-    Console::puts("Creating IDLE Thread\n");
-    char * stack0 = new char[100];
-    idlethread = new Thread(idle_func,stack0,100);
-
 
     Console::puts("CREATING THREAD 1...\n");
     char * stack1 = new char[1024];
@@ -312,21 +315,25 @@ int main() {
     thread4 = new Thread(fun4, stack4, 1024);
     Console::puts("DONE\n");
 
+    Console::puts("CREATING THREAD 5...");
+    char * stack5 = new char[1024];
+    thread5 = new Thread(fun5, stack5, 1024);
+    Console::puts("DONE\n");
+
 #ifdef _USES_SCHEDULER_
 
     /* WE ADD thread2 - thread4 TO THE READY QUEUE OF THE SCHEDULER. */
-
-    SYSTEM_SCHEDULER->add(thread1);
     SYSTEM_SCHEDULER->add(thread2);
     SYSTEM_SCHEDULER->add(thread3);
     SYSTEM_SCHEDULER->add(thread4);
+    SYSTEM_SCHEDULER->add(thread5);
 
 #endif
 
     /* -- KICK-OFF THREAD1 ... */
 
-    Console::puts("STARTING IDLE Thread ...\n");
-    Thread::dispatch_to(idlethread);
+    Console::puts("STARTING Thread 1 ...\n");
+    Thread::dispatch_to(thread1);
 
     /* -- AND ALL THE REST SHOULD FOLLOW ... */
 
