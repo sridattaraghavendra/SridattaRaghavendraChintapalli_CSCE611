@@ -37,12 +37,12 @@ BlockingDisk::BlockingDisk(DISK_ID _disk_id, unsigned int _size)
 
 void BlockingDisk::read(unsigned long _block_no, unsigned char * _buf) {
   // -- REPLACE THIS!!!
-  SimpleDisk::read(_block_no, _buf);
+
 
 }
 
 
 void BlockingDisk::write(unsigned long _block_no, unsigned char * _buf) {
   // -- REPLACE THIS!!!
-  SimpleDisk::write(_block_no, _buf);
+  
 }
