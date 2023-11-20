@@ -22,6 +22,9 @@
 /*--------------------------------------------------------------------------*/
 
 #include "simple_disk.H"
+#include "thread.H"
+#include "interrupts.H"
+
 
 /*--------------------------------------------------------------------------*/
 /* DATA STRUCTURES */ 
@@ -33,7 +36,20 @@
 /* B l o c k i n g D i s k  */
 /*--------------------------------------------------------------------------*/
 
-class BlockingDisk : public SimpleDisk {
+class BlockingDisk : public SimpleDisk, public InterruptHandler {
+   typedef struct queue{
+      Thread * thread_id;
+      struct queue *next;
+   }disk_queue;
+
+   disk_queue * head;
+   disk_queue * tail;
+
+   Thread * dequeue();
+   void enqueue(Thread* _thread);
+   virtual void handle_interrupt(REGS * _regs);
+protected:
+   virtual void wait_until_ready();
 public:
    BlockingDisk(DISK_ID _disk_id, unsigned int _size); 
    /* Creates a BlockingDisk device with the given size connected to the 

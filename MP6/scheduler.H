@@ -58,13 +58,17 @@ class Scheduler {
 
   /* The scheduler may need private members... */
 private:
-   Thread ** queue;
-   unsigned int head;
-   unsigned int tail;
+   /*Changing to linked list because of fixed memory constraints in array*/
+   typedef struct queue{
+      Thread * thread;
+      struct queue * next;
+   } scheduler_queue;
+   scheduler_queue * head;
+   scheduler_queue * tail;
+   long queue_size = 0;
 
    virtual void enqueue(Thread * thread_address);
    virtual Thread * dequeue();
-   virtual bool isQueueFull();
    virtual bool isQueueEmpty();
   
 public:
@@ -98,51 +102,6 @@ public:
       of the thread. 
       Graciously handle the case where the thread wants to terminate itself.*/
   
-};
-	
-
-class RRScheduler : public Scheduler{
-
-   private:
-      Thread ** queue;
-      unsigned int head;
-      unsigned int tail;
-
-      virtual void enqueue(Thread * thread_address);
-      virtual Thread * dequeue();
-      virtual bool isQueueFull();
-      virtual bool isQueueEmpty();
-
-   public:
-
-      RRScheduler(unsigned _end_of_quantum);
-      /* Setup the scheduler. This sets up the ready queue, for example.
-         If the scheduler implements some sort of round-robin scheme, then the 
-         end_of_quantum handler is installed in the constructor as well. */
-
-      /* NOTE: We are making all functions virtual. This may come in handy when
-               you want to derive RRScheduler from this class. */
-   
-      virtual void yield();
-      /* Called by the currently running thread in order to give up the CPU. 
-         The scheduler selects the next thread from the ready queue to load onto 
-         the CPU, and calls the dispatcher function defined in 'Thread.H' to
-         do the context switch. */
-
-      virtual void resume(Thread * _thread);
-      /* Add the given thread to the ready queue of the scheduler. This is called
-         for threads that were waiting for an event to happen, or that have 
-         to give up the CPU in response to a preemption. */
-
-      virtual void add(Thread * _thread);
-      /* Make the given thread runnable by the scheduler. This function is called
-         after thread creation. Depending on implementation, this function may 
-         just add the thread to the ready queue, using 'resume'. */
-
-      virtual void terminate(Thread * _thread);
-      /* Remove the given thread from the scheduler in preparation for destruction
-         of the thread. 
-         Graciously handle the case where the thread wants to terminate itself.*/
 };
 
 #endif

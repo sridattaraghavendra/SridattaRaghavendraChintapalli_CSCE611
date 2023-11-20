@@ -52,8 +52,10 @@
 #include "scheduler.H"      /* WE WILL NEED A SCHEDULER WITH BlockingDisk */
 #endif
 
-#include "simple_disk.H"    /* DISK DEVICE */
+#include "simple_disk.H"
+#include "blocking_disk.H"                 /* DISK DEVICE */
                             /* YOU MAY NEED TO INCLUDE blocking_disk.H
+
 /*--------------------------------------------------------------------------*/
 /* MEMORY MANAGEMENT */
 /*--------------------------------------------------------------------------*/
@@ -104,7 +106,7 @@ Scheduler * SYSTEM_SCHEDULER;
 /*--------------------------------------------------------------------------*/
 
 /* -- A POINTER TO THE SYSTEM DISK */
-SimpleDisk * SYSTEM_DISK;
+BlockingDisk * SYSTEM_DISK;
 
 #define SYSTEM_DISK_SIZE (10 MB)
 
@@ -290,8 +292,8 @@ int main() {
 
     /* -- DISK DEVICE -- */
 
-    SYSTEM_DISK = new SimpleDisk(DISK_ID::MASTER, SYSTEM_DISK_SIZE);
-   
+    SYSTEM_DISK = new BlockingDisk(DISK_ID::MASTER, SYSTEM_DISK_SIZE);
+    InterruptHandler::register_handler(14, SYSTEM_DISK);
     /* NOTE: The timer chip starts periodically firing as 
              soon as we enable interrupts.
              It is important to install a timer handler, as we 
@@ -299,7 +301,7 @@ int main() {
 
     /* -- ENABLE INTERRUPTS -- */
 
-     Machine::enable_interrupts();
+    Machine::enable_interrupts();
 
     /* -- MOST OF WHAT WE NEED IS SETUP. THE KERNEL CAN START. */
 
