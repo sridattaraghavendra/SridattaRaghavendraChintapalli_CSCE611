@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "kernel.C": "cpp",
+        "file.C": "cpp",
+        "file_system.C": "cpp",
+        "exceptions.C": "cpp"
+    }
+}
