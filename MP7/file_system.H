@@ -17,6 +17,9 @@
 /*--------------------------------------------------------------------------*/
 /* DEFINES */
 /*--------------------------------------------------------------------------*/
+#define KB * (0x1 << 10)
+#define BLOCK_USED 'U'
+#define FREE_BLOCK 'F'
 
 /* -- (none) -- */
 
@@ -43,18 +46,23 @@ class Inode
                            // to the Inode.
 
 private:
-  long id; // File "name"
+   long id; // File "name"
 
   /* You will need additional information in the inode, such as allocation 
      information. */
+   unsigned int start_block;
+   unsigned int block_size;
+   unsigned int current_position;
 
-  FileSystem *fs; // It may be handy to have a pointer to the File system.
+   FileSystem *fs; // It may be handy to have a pointer to the File system.
                   // For example when you need a new block or when you want
                   // to load or save the inode list. (Depends on your
                   // implementation.)
 
   /* You may need a few additional functions to help read and store the 
      inodes from and to disk. */
+   static void WriteInodeListToDisk(SimpleDisk * _disk, unsigned char * _buf);
+   static Inode * ReadInodeListFromDisk(SimpleDisk * _disk, unsigned char * _buf);
 };
 
 /*--------------------------------------------------------------------------*/
@@ -79,12 +87,17 @@ private:
   unsigned int size;
 
   static constexpr unsigned int MAX_INODES = SimpleDisk::BLOCK_SIZE / sizeof(Inode);
+  static constexpr unsigned int MAX_BLOCKS = (128 KB) / SimpleDisk::BLOCK_SIZE;
+
   /* Just as an example, you can store MAX_INODES in a single INODES block */
 
   Inode *inodes; // the inode list
   /* The inode list */
 
   unsigned char *free_blocks;
+
+  static unsigned char buf[SimpleDisk::BLOCK_SIZE];
+
   /* The free-block list. You may want to implement the "list" as a bitmap. 
      Feel free to use an unsigned char to represent whether a block is free or not; 
      no need to go to bits if you don't want to. 
@@ -95,6 +108,10 @@ private:
   // int GetFreeBlock();
   /* It may be helpful to two functions to hand out free inodes in the inode list and free
      blocks. These functions also come useful to class Inode and File. */
+   Inode * GetFreeInode();
+   int GetFreeBlock();
+   void WriteFreeListToDisk(SimpleDisk * _disk, unsigned char * _buf);
+   void ReadFreeListFromDisk(SimpleDisk * _disk, unsigned char * _buf);
 
 public:
   FileSystem();
