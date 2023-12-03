@@ -66,7 +66,7 @@ int File::Read(unsigned int _n, char *_buf) {
     /*Bytes to read*/
     unsigned int bytesToRead = (inode->block_size * SimpleDisk::BLOCK_SIZE) - currentPosition;
 
-    if(currentPosition >= inode->block_size * SimpleDisk::BLOCK_SIZE){
+    if(EoF()){
         Console::puts("End of file reached.\n");
         return 0;
     }
