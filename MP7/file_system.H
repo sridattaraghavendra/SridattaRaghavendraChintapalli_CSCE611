@@ -52,7 +52,6 @@ private:
      information. */
    unsigned int start_block;
    unsigned int block_size;
-   unsigned int current_position;
 
    FileSystem *fs; // It may be handy to have a pointer to the File system.
                   // For example when you need a new block or when you want
@@ -62,7 +61,7 @@ private:
   /* You may need a few additional functions to help read and store the 
      inodes from and to disk. */
    static void WriteInodeListToDisk(SimpleDisk * _disk, unsigned char * _buf);
-   static Inode * ReadInodeListFromDisk(SimpleDisk * _disk, unsigned char * _buf);
+   static void ReadInodeListFromDisk(SimpleDisk * _disk, unsigned char * _buf);
 };
 
 /*--------------------------------------------------------------------------*/
@@ -83,11 +82,10 @@ class FileSystem
 private:
   /* -- DEFINE YOUR FILE SYSTEM DATA STRUCTURES HERE. */
 
-  SimpleDisk *disk;
   unsigned int size;
 
   static constexpr unsigned int MAX_INODES = SimpleDisk::BLOCK_SIZE / sizeof(Inode);
-  static constexpr unsigned int MAX_BLOCKS = (128 KB) / SimpleDisk::BLOCK_SIZE;
+  static const unsigned int MAX_BLOCKS = (128 KB) / SimpleDisk::BLOCK_SIZE;
 
   /* Just as an example, you can store MAX_INODES in a single INODES block */
 
@@ -114,6 +112,8 @@ private:
    void ReadFreeListFromDisk(SimpleDisk * _disk, unsigned char * _buf);
 
 public:
+  SimpleDisk *disk;
+
   FileSystem();
   /* Just initializes local data structures. Does not connect to disk yet. */
 

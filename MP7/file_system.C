@@ -36,15 +36,22 @@
 /*--------------------------------------------------------------------------*/
 /* CONSTRUCTOR */
 /*--------------------------------------------------------------------------*/
+unsigned char FileSystem::buf[SimpleDisk::BLOCK_SIZE];
 
 FileSystem::FileSystem() {
     Console::puts("In file system constructor.\n");
+    inodes = new Inode[MAX_INODES];
+    free_blocks = new unsigned char[MAX_BLOCKS];
+    memset(inodes,0,MAX_INODES);
+    memset(free_blocks,0,MAX_BLOCKS);
 }
 
 FileSystem::~FileSystem() {
     Console::puts("unmounting file system\n");
+
     /* Make sure that the inode list and the free list are saved. */
-    assert(false);
+    disk->write(0,(unsigned char *)inodes);
+    disk->write(1,free_blocks);
 }
 
 /*--------------------------------------------------------------------------*/
@@ -61,9 +68,11 @@ Inode * FileSystem::GetFreeInode(){
 
 int FileSystem::GetFreeBlock(){
     memset(buf,0,SimpleDisk::BLOCK_SIZE);
+    memset(free_blocks,0,SimpleDisk::BLOCK_SIZE);
     disk->read(1,buf);
 
-    free_blocks = buf;
+    memcpy(free_blocks,buf,SimpleDisk::BLOCK_SIZE);
+
 
     for(int index = 0; index < MAX_BLOCKS; index++){
         if(free_blocks[index] == FREE_BLOCK){
@@ -82,13 +91,12 @@ void Inode::WriteInodeListToDisk(SimpleDisk * _disk, unsigned char * _buf){
     _disk->write(0,_buf);
 }
 
-Inode * Inode::ReadInodeListFromDisk(SimpleDisk * _disk, unsigned char * _buf){
+void Inode::ReadInodeListFromDisk(SimpleDisk * _disk, unsigned char * _buf){
     _disk->read(0,_buf);
-    return (Inode *) _buf;
 }
 
 void FileSystem::WriteFreeListToDisk(SimpleDisk * _disk, unsigned char * _buf){
-    _disk->write(1,buf);
+    _disk->write(1,_buf);
 }
 
 void FileSystem::ReadFreeListFromDisk(SimpleDisk * _disk, unsigned char * _buf){
@@ -110,11 +118,12 @@ bool FileSystem::Mount(SimpleDisk * _disk) {
     /* Here you read the inode list and the free list into memory */
 
     /* Read INODE List */
-    inodes = Inode::ReadInodeListFromDisk(_disk,buf);
+    Inode::ReadInodeListFromDisk(_disk,buf);
+    memcpy(inodes,buf,SimpleDisk::BLOCK_SIZE);
     
     /* Read FREE List */
     _disk->read(1, buf);
-    free_blocks = buf;
+    memcpy(free_blocks,buf,SimpleDisk::BLOCK_SIZE);
 
     disk = _disk;
     return true;
@@ -139,7 +148,7 @@ bool FileSystem::Format(SimpleDisk * _disk, unsigned int _size) { // static!
     for(int index=0; index < MAX_INODES; index++){
         inodeList[index].id = -1;
         inodeList[index].start_block = 0;
-        inodeList[index].current_position = 0;
+        inodeList[index].block_size = 0;
     }
     Inode::WriteInodeListToDisk(_disk,buf);
 
@@ -165,7 +174,8 @@ Inode * FileSystem::LookupFile(int _file_id) {
     /*Read INODES From Disk*/
     memset(buf,0,SimpleDisk::BLOCK_SIZE);
 
-    inodes = Inode::ReadInodeListFromDisk(disk,buf);
+    Inode::ReadInodeListFromDisk(disk,buf);
+    memcpy(inodes,buf,SimpleDisk::BLOCK_SIZE);
 
     /* Here you go through the inode list to find the file. */
     for(int index=0; index < MAX_INODES; index++){
@@ -184,7 +194,8 @@ bool FileSystem::CreateFile(int _file_id) {
        new file. After this function there will be a new file on disk. */
     memset(buf,0,SimpleDisk::BLOCK_SIZE);
 
-    inodes = Inode::ReadInodeListFromDisk(disk,buf);
+    Inode::ReadInodeListFromDisk(disk,buf);
+    memcpy(inodes,buf,SimpleDisk::BLOCK_SIZE);
 
     /*Check if file is already present*/
     for(int index=0; index < MAX_INODES; index++){
@@ -206,10 +217,11 @@ bool FileSystem::CreateFile(int _file_id) {
     freeInode->start_block = freeBlock;
     freeInode->block_size = 1;
 
-    Inode::WriteInodeListToDisk(disk,buf);
+    Inode::WriteInodeListToDisk(disk,(unsigned char *)inodes);
     
     /*Mark the block as used and update free list to disk*/
     free_blocks[freeBlock] = BLOCK_USED;
+
     FileSystem::WriteFreeListToDisk(disk,free_blocks);
 
     return true;
@@ -226,7 +238,8 @@ bool FileSystem::DeleteFile(int _file_id) {
 
     memset(buf,0,SimpleDisk::BLOCK_SIZE);
 
-    inodes = Inode::ReadInodeListFromDisk(disk,buf);
+    Inode::ReadInodeListFromDisk(disk,buf);
+    memcpy(inodes,buf,SimpleDisk::BLOCK_SIZE);
 
     /*Check if file is already present*/
     for(int index=0; index < MAX_INODES; index++){
@@ -236,7 +249,6 @@ bool FileSystem::DeleteFile(int _file_id) {
            inodes[index].id = -1;
            inodes[index].start_block = 0;
            inodes[index].block_size = 0;
-           inodes[index].current_position = 0;
            isFileFound = true;
            break;
         }
@@ -247,7 +259,7 @@ bool FileSystem::DeleteFile(int _file_id) {
         assert(false);
     }
 
-    disk->write(0,buf);
+    Inode::WriteInodeListToDisk(disk,(unsigned char *)inodes);
 
     /*Free blocks*/
     ReadFreeListFromDisk(disk,buf);

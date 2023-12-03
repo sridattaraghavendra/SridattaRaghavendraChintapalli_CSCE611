@@ -40,10 +40,12 @@ class FileSystem;
 /* class  F i l e   */
 /*--------------------------------------------------------------------------*/
 
-class File  {
-    
+class File  {   
 private:
     /* -- your file data structures here ... */
+    Inode* inode;
+    FileSystem* fileSystem;
+    unsigned int currentPosition;
     
     /* You will need a reference to the inode, maybe even a reference to the 
        file system. 
